@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Menu, Skull } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useMemo, useState, type PropsWithChildren } from 'react';
+import AppLogoIcon from '@/components/app-logo-icon';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -92,7 +93,7 @@ export default function PublicLayout({ children }: PropsWithChildren) {
                         {site.logo_url ? (
                             <img src={site.logo_url} alt={site.name} className="size-6 object-contain" />
                         ) : (
-                            <Skull className="size-6" />
+                            <AppLogoIcon className="size-6 object-contain" />
                         )}
                         <span className="text-lg font-semibold tracking-tight">{site.name}</span>
                     </Link>
@@ -125,7 +126,7 @@ export default function PublicLayout({ children }: PropsWithChildren) {
                                 {site.logo_url ? (
                                     <img src={site.logo_url} alt={site.name} className="size-5 object-contain" />
                                 ) : (
-                                    <Skull className="size-5" />
+                                    <AppLogoIcon className="size-5 object-contain" />
                                 )}
                                 <span className="font-semibold">{site.name}</span>
                             </Link>
