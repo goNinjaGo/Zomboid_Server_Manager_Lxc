@@ -1,16 +1,16 @@
 import { usePage } from '@inertiajs/react';
-import { Skull } from 'lucide-react';
+import AppLogoIcon from '@/components/app-logo-icon';
 
 export default function AppLogo() {
     const { site } = usePage().props;
 
     return (
         <>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+            <div className="flex aspect-square size-8 items-center justify-center">
                 {site.logo_url ? (
-                    <img src={site.logo_url} alt={site.name} className="size-5 object-contain" />
+                    <img src={site.logo_url} alt={site.name} className="size-8 object-contain" />
                 ) : (
-                    <Skull className="size-5" />
+                    <AppLogoIcon className="size-8 object-contain" />
                 )}
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">
