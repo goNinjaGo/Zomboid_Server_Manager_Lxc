@@ -220,7 +220,7 @@ fi
 
 if [ "${#MISSING_WORKSHOP_IDS[@]}" -gt 0 ]; then
     echo "[configure-server] Downloading ${#MISSING_WORKSHOP_IDS[@]} Workshop mod(s) via SteamCMD: ${MISSING_WORKSHOP_IDS[*]}"
-    STEAMCMD_BIN="$(command -v steamcmd.sh || echo /home/root/.local/steamcmd/steamcmd.sh)"
+    STEAMCMD_BIN="${STEAMCMD:-$(command -v steamcmd.sh || command -v steamcmd || echo /home/root/.local/steamcmd/steamcmd.sh)}"
     SCMD_ARGS=("+force_install_dir" "$PZ_INSTALL_DIR" "+login" "anonymous")
     for wid in "${MISSING_WORKSHOP_IDS[@]}"; do
         SCMD_ARGS+=("+workshop_download_item" "$PZ_WORKSHOP_APP_ID" "$wid")

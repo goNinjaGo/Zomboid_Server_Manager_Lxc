@@ -6,6 +6,8 @@
 
 **Full-stack web panel for managing a Project Zomboid dedicated server.**
 
+Docker-free Linux deployment is available using native systemd services, PostgreSQL, and SteamCMD. See [Native Linux Installation](docs/installation-native.md). Docker Compose remains supported.
+
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org)

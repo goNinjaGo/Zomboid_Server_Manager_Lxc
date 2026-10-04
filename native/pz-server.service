@@ -1,0 +1,22 @@
+[Unit]
+Description=Project Zomboid dedicated server managed by Zomboid Manager
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pzserver
+Group=pzmanager
+EnvironmentFile=/etc/zomboid-manager/server.env
+Environment=PZ_CONFIGURE_SCRIPT=/opt/zomboid/configure-server.sh
+WorkingDirectory=/opt/zomboid/server
+ExecStart=/opt/zomboid/native-run-server.sh
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGINT
+TimeoutStopSec=90
+LimitNOFILE=100000
+UMask=0002
+
+[Install]
+WantedBy=multi-user.target

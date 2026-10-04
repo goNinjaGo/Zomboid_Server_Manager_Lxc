@@ -1,0 +1,15 @@
+[Unit]
+Description=Zomboid Manager background queue worker
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=pzmanager
+WorkingDirectory=/opt/zomboid-manager/app
+ExecStart=/usr/bin/php artisan queue:work database --tries=3 --timeout=600 --sleep=3
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

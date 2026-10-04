@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use Symfony\Component\Process\Process;
 
 class DockerManager
 {
@@ -18,6 +19,10 @@ class DockerManager
      */
     public function getContainerStatus(): array
     {
+        if (config('zomboid.runtime') === 'systemd') {
+            return $this->getSystemdStatus();
+        }
+
         $response = $this->request('GET', "/containers/{$this->containerName}/json");
 
         if ($response === null) {
@@ -43,6 +48,10 @@ class DockerManager
 
     public function startContainer(): bool
     {
+        if (config('zomboid.runtime') === 'systemd') {
+            return $this->runSystemctl('start');
+        }
+
         $response = $this->request('POST', "/containers/{$this->containerName}/start");
 
         return $response !== null;
@@ -50,6 +59,10 @@ class DockerManager
 
     public function stopContainer(int $timeout = 30): bool
     {
+        if (config('zomboid.runtime') === 'systemd') {
+            return $this->runSystemctl('stop');
+        }
+
         $response = $this->request('POST', "/containers/{$this->containerName}/stop", [
             'query' => ['t' => $timeout],
             'timeout' => $timeout + 15,
@@ -60,6 +73,10 @@ class DockerManager
 
     public function restartContainer(int $timeout = 30): bool
     {
+        if (config('zomboid.runtime') === 'systemd') {
+            return $this->runSystemctl('restart');
+        }
+
         $response = $this->request('POST', "/containers/{$this->containerName}/restart", [
             'query' => ['t' => $timeout],
             'timeout' => $timeout + 30,
@@ -73,6 +90,19 @@ class DockerManager
      */
     public function getContainerLogs(int $tail = 100, ?string $since = null): array
     {
+        if (config('zomboid.runtime') === 'systemd') {
+            $service = config('zomboid.systemd.service', 'pz-server');
+            $command = ['sudo', '-n', 'journalctl', '-u', $service, '-n', (string) max(1, min($tail, 1000)), '--no-pager', '-o', 'short-iso'];
+            if ($since !== null && ctype_digit($since)) {
+                $command[] = '--since=@'.$since;
+            }
+            $process = new Process($command);
+            $process->setTimeout(120);
+            $process->run();
+
+            return $process->isSuccessful() ? array_values(array_filter(explode("\n", trim($process->getOutput())))) : [];
+        }
+
         $query = [
             'stdout' => true,
             'stderr' => true,
@@ -93,6 +123,48 @@ class DockerManager
         }
 
         return $this->parseLogOutput($response);
+    }
+
+    private function getSystemdStatus(): array
+    {
+        $service = config('zomboid.systemd.service', 'pz-server');
+        $process = new Process(['sudo', '-n', 'systemctl', 'show', $service]);
+        $process->run();
+
+        if (! $process->isSuccessful()) {
+            return ['exists' => false, 'running' => false, 'status' => 'not_found'];
+        }
+
+        $properties = [];
+        foreach (explode("\n", trim($process->getOutput())) as $line) {
+            if (str_contains($line, '=')) {
+                [$key, $value] = explode('=', $line, 2);
+                $properties[$key] = $value;
+            }
+        }
+
+        $state = $properties['ActiveState'] ?? 'unknown';
+        $startedAt = $properties['ActiveEnterTimestamp'] ?? '';
+
+        return [
+            'exists' => ($properties['LoadState'] ?? '') !== 'not-found',
+            'running' => $state === 'active',
+            'status' => $state === 'active' ? ($properties['SubState'] ?? 'running') : $state,
+            'health_status' => $state === 'active' ? 'healthy' : null,
+            'started_at' => $startedAt !== '' && ($timestamp = strtotime($startedAt)) !== false ? date(DATE_ATOM, $timestamp) : null,
+            'finished_at' => null,
+            'restart_count' => 0,
+        ];
+    }
+
+    private function runSystemctl(string $action): bool
+    {
+        $service = config('zomboid.systemd.service', 'pz-server');
+        $process = new Process(['sudo', '-n', 'systemctl', $action, $service]);
+        $process->setTimeout(120);
+        $process->run();
+
+        return $process->isSuccessful();
     }
 
     /**

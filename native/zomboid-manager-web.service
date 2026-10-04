@@ -1,0 +1,15 @@
+[Unit]
+Description=Zomboid Manager Laravel web application
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=pzmanager
+WorkingDirectory=/opt/zomboid-manager/app
+ExecStart=/usr/bin/php artisan serve --host=127.0.0.1 --port=8000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

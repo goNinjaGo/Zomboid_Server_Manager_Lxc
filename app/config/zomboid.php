@@ -18,9 +18,13 @@ return [
     | Docker Engine API
     |--------------------------------------------------------------------------
     */
+    'runtime' => env('PZ_RUNTIME', 'docker'),
     'docker' => [
         'proxy_url' => env('DOCKER_PROXY_URL', 'http://docker-socket-proxy:2375'),
         'container_name' => env('GAME_SERVER_CONTAINER_NAME', 'pz-game-server'),
+    ],
+    'systemd' => [
+        'service' => env('PZ_SYSTEMD_SERVICE', 'pz-server'),
     ],
 
     /*
