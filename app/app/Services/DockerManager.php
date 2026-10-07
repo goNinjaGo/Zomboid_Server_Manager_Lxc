@@ -7,11 +7,18 @@ use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 
+/**
+ * Controls the configured game-server runtime (Docker, host systemd, or LXC).
+ * The historical class name remains for compatibility with existing callers.
+ */
 class DockerManager
 {
     public function __construct(
         private readonly string $proxyUrl,
         private readonly string $containerName,
+        private readonly string $runtime = 'docker',
+        private readonly string $systemdService = 'pz-server',
+        private readonly string $lxcManager = '/usr/local/sbin/zomboid-lxc-manager',
     ) {}
 
     /**
@@ -19,7 +26,11 @@ class DockerManager
      */
     public function getContainerStatus(): array
     {
-        if (config('zomboid.runtime') === 'systemd') {
+        if ($this->runtime === 'lxc') {
+            return $this->getLxcStatus();
+        }
+
+        if ($this->runtime === 'systemd') {
             return $this->getSystemdStatus();
         }
 
@@ -48,7 +59,11 @@ class DockerManager
 
     public function startContainer(): bool
     {
-        if (config('zomboid.runtime') === 'systemd') {
+        if ($this->runtime === 'lxc') {
+            return $this->runLxcManager(['start']);
+        }
+
+        if ($this->runtime === 'systemd') {
             return $this->runSystemctl('start');
         }
 
@@ -59,7 +74,11 @@ class DockerManager
 
     public function stopContainer(int $timeout = 30): bool
     {
-        if (config('zomboid.runtime') === 'systemd') {
+        if ($this->runtime === 'lxc') {
+            return $this->runLxcManager(['stop']);
+        }
+
+        if ($this->runtime === 'systemd') {
             return $this->runSystemctl('stop');
         }
 
@@ -73,7 +92,11 @@ class DockerManager
 
     public function restartContainer(int $timeout = 30): bool
     {
-        if (config('zomboid.runtime') === 'systemd') {
+        if ($this->runtime === 'lxc') {
+            return $this->runLxcManager(['restart']);
+        }
+
+        if ($this->runtime === 'systemd') {
             return $this->runSystemctl('restart');
         }
 
@@ -90,8 +113,12 @@ class DockerManager
      */
     public function getContainerLogs(int $tail = 100, ?string $since = null): array
     {
-        if (config('zomboid.runtime') === 'systemd') {
-            $service = config('zomboid.systemd.service', 'pz-server');
+        if ($this->runtime === 'lxc') {
+            return $this->getLxcLogs($tail, $since);
+        }
+
+        if ($this->runtime === 'systemd') {
+            $service = $this->systemdService;
             $command = ['sudo', '-n', 'journalctl', '-u', $service, '-n', (string) max(1, min($tail, 1000)), '--no-pager', '-o', 'short-iso'];
             if ($since !== null && ctype_digit($since)) {
                 $command[] = '--since=@'.$since;
@@ -127,7 +154,7 @@ class DockerManager
 
     private function getSystemdStatus(): array
     {
-        $service = config('zomboid.systemd.service', 'pz-server');
+        $service = $this->systemdService;
         $process = new Process(['sudo', '-n', 'systemctl', 'show', $service]);
         $process->run();
 
@@ -159,12 +186,72 @@ class DockerManager
 
     private function runSystemctl(string $action): bool
     {
-        $service = config('zomboid.systemd.service', 'pz-server');
+        $service = $this->systemdService;
         $process = new Process(['sudo', '-n', 'systemctl', $action, $service]);
         $process->setTimeout(120);
         $process->run();
 
         return $process->isSuccessful();
+    }
+
+    /**
+     * @return array{exists: bool, running: bool, status: string, health_status: string|null, started_at: string|null, finished_at: null, restart_count: int}
+     */
+    private function getLxcStatus(): array
+    {
+        $process = $this->runLxcManager(['status']);
+        if (! $process->isSuccessful()) {
+            return ['exists' => false, 'running' => false, 'status' => 'not_found'];
+        }
+
+        $values = [];
+        foreach (explode("\n", trim($process->getOutput())) as $line) {
+            if (str_contains($line, '=')) {
+                [$key, $value] = explode('=', $line, 2);
+                $values[$key] = $value;
+            }
+        }
+
+        $exists = ($values['exists'] ?? '0') === '1';
+        $running = $exists && ($values['service'] ?? '') === 'active';
+        $state = strtoupper($values['container_state'] ?? 'UNKNOWN');
+        $status = $running ? 'running' : ($state === 'RUNNING' ? 'server_stopped' : strtolower($state));
+
+        return [
+            'exists' => $exists,
+            'running' => $running,
+            'status' => $status,
+            'health_status' => $running ? 'healthy' : null,
+            'started_at' => $values['started_at'] ?? null,
+            'finished_at' => null,
+            'restart_count' => 0,
+        ];
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getLxcLogs(int $tail, ?string $since): array
+    {
+        $args = ['logs', (string) max(1, min($tail, 1000))];
+        if ($since !== null && ctype_digit($since)) {
+            $args[] = $since;
+        }
+
+        $process = $this->runLxcManager($args, 120);
+
+        return $process->isSuccessful()
+            ? array_values(array_filter(explode("\n", trim($process->getOutput()))))
+            : [];
+    }
+
+    private function runLxcManager(array $arguments, int $timeout = 120): Process
+    {
+        $process = new Process(['sudo', '-n', $this->lxcManager, ...$arguments]);
+        $process->setTimeout($timeout);
+        $process->run();
+
+        return $process;
     }
 
     /**

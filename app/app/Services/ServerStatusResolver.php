@@ -7,7 +7,7 @@ use Carbon\Carbon;
 /**
  * Consolidates server status resolution logic used by multiple controllers.
  *
- * Determines both Docker container state and game server readiness by
+ * Determines game-runtime state and server readiness by
  * combining container health checks with RCON/Lua bridge responsiveness.
  */
 class ServerStatusResolver
@@ -81,7 +81,7 @@ class ServerStatusResolver
     }
 
     /**
-     * Map Docker container status to a simplified state string.
+     * Map runtime status to a simplified state string.
      */
     private function mapContainerState(array $containerStatus): string
     {
@@ -93,7 +93,7 @@ class ServerStatusResolver
     }
 
     /**
-     * Determine game server status based on data source and Docker health.
+     * Determine game server status based on data source and runtime health.
      *
      * If we got data from lua_bridge or rcon, the game server is truly responsive.
      * Otherwise, fall back to Docker health check.

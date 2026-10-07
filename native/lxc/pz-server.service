@@ -1,0 +1,22 @@
+[Unit]
+Description=Project Zomboid dedicated server inside LXC
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pzserver
+Group=pzmanager
+EnvironmentFile=/etc/zomboid-manager/server.env
+Environment=PZ_CONFIGURE_SCRIPT=/usr/local/lib/zomboid-manager/configure-server.sh
+WorkingDirectory=/opt/zomboid/server
+ExecStart=/usr/local/lib/zomboid-manager/run-server.sh
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGINT
+TimeoutStopSec=90
+LimitNOFILE=100000
+UMask=0002
+
+[Install]
+WantedBy=multi-user.target

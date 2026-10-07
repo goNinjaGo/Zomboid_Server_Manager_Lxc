@@ -34,7 +34,7 @@ class ServerController extends Controller
         try {
             $status = $this->docker->getContainerStatus();
         } catch (\Throwable) {
-            return response()->json(['error' => 'Cannot connect to Docker daemon'], 503);
+            return response()->json(['error' => 'Cannot connect to server runtime'], 503);
         }
 
         if ($status['running']) {
@@ -101,7 +101,7 @@ class ServerController extends Controller
             sleep(5);
             $this->rcon->command('quit');
         } catch (\Throwable) {
-            // RCON unavailable — proceed with Docker stop
+            // RCON unavailable — proceed with runtime stop
         }
 
         try {

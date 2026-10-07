@@ -36,7 +36,7 @@ class ModController extends Controller
         try {
             $serverRunning = (bool) ($this->dockerManager->getContainerStatus()['running'] ?? false);
         } catch (\Throwable) {
-            // Docker socket unreachable — treat server as stopped, keep rendering
+            // Runtime unavailable — treat server as stopped, keep rendering
         }
 
         try {
@@ -217,7 +217,7 @@ class ModController extends Controller
         try {
             $serverRunning = (bool) ($this->dockerManager->getContainerStatus()['running'] ?? false);
         } catch (\Throwable) {
-            // Docker socket unreachable — report the list without live status
+            // Runtime unavailable — report the list without live status
         }
 
         $status = $this->modManager->listWithStatus(config('zomboid.paths.server_ini'), $serverRunning);
@@ -311,7 +311,7 @@ class ModController extends Controller
         try {
             $serverRunning = (bool) ($this->dockerManager->getContainerStatus()['running'] ?? false);
         } catch (\Throwable) {
-            // Docker socket unreachable — report the list without live status
+            // Runtime unavailable — report the list without live status
         }
 
         $status = $this->modManager->listWithStatus(

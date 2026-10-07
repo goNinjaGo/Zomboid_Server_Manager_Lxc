@@ -24,7 +24,7 @@ class OnlinePlayersReader
      *
      * The source indicates how reliable the data is for determining game server state:
      * - lua_bridge/rcon: game server is fully responsive
-     * - user_log/none: game may still be starting (only Docker is alive)
+     * - user_log/none: game may still be starting (runtime is alive)
      *
      * @return array{usernames: string[], source: 'lua_bridge'|'rcon'|'user_log'|'none'}
      */

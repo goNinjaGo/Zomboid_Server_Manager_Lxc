@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+NAME=pz-game
+
+attach() {
+    lxc-attach --name "$NAME" --clear-env -- "$@"
+}
+
+container_state() {
+    lxc-info --name "$NAME" --state 2>/dev/null
+}
+
+ensure_container_running() {
+    local state
+    state=$(container_state || true)
+    if [[ "$state" != RUNNING ]]; then
+        lxc-start --name "$NAME"
+        lxc-wait --name "$NAME" --state RUNNING --timeout 60
+    fi
+}
+
+case "${1:-}" in
+    container-start)
+        ensure_container_running
+        ;;
+    container-stop)
+        if [[ "$(container_state || true)" == RUNNING ]]; then
+            lxc-stop --name "$NAME" --timeout 90
+        fi
+        ;;
+    status)
+        info=$(lxc-info --name "$NAME" 2>/dev/null) || exit 1
+        state=$(awk -F': ' '$1 == "State" { print $2; exit }' <<<"$info")
+        printf 'exists=1\ncontainer_state=%s\n' "${state:-UNKNOWN}"
+        if [[ "$state" == RUNNING ]]; then
+            service=$(attach systemctl is-active pz-server 2>/dev/null || true)
+            started_at=$(attach systemctl show pz-server --property=ActiveEnterTimestamp --value 2>/dev/null || true)
+            printf 'service=%s\nstarted_at=%s\n' "${service:-inactive}" "$started_at"
+        else
+            printf 'service=inactive\n'
+        fi
+        ;;
+    start)
+        ensure_container_running
+        attach systemctl start pz-server
+        ;;
+    stop)
+        if [[ "$(container_state || true)" == RUNNING ]]; then
+            attach systemctl stop pz-server
+        fi
+        ;;
+    restart)
+        ensure_container_running
+        attach systemctl restart pz-server
+        ;;
+    logs)
+        tail_count=${2:-100}
+        since=${3:-}
+        [[ "$tail_count" =~ ^[0-9]{1,4}$ ]] || exit 2
+        (( tail_count >= 1 && tail_count <= 1000 )) || exit 2
+        [[ -z "$since" || "$since" =~ ^[0-9]{1,12}$ ]] || exit 2
+        if [[ "$(container_state || true)" != RUNNING ]]; then
+            exit 0
+        fi
+        command=(journalctl -u pz-server -n "$tail_count" --no-pager -o short-iso)
+        if [[ -n "$since" ]]; then
+            command+=(--since="@$since")
+        fi
+        attach "${command[@]}"
+        ;;
+    *)
+        echo "Usage: $0 {container-start|container-stop|status|start|stop|restart|logs [tail [since]]}" >&2
+        exit 2
+        ;;
+esac

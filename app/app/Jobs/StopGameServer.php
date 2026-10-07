@@ -30,7 +30,7 @@ class StopGameServer implements ShouldQueue
             sleep(5);
             $rcon->command('quit');
         } catch (\Throwable $e) {
-            Log::warning('RCON unavailable during scheduled stop, proceeding with Docker stop', [
+            Log::warning('RCON unavailable during scheduled stop, proceeding with runtime stop', [
                 'error' => $e->getMessage(),
             ]);
         }
@@ -40,7 +40,7 @@ class StopGameServer implements ShouldQueue
         AuditLogger::record(
             actor: 'system',
             action: 'server.stop.executed',
-            target: config('zomboid.docker.container_name'),
+            target: config('zomboid.runtime_name'),
             details: ['source' => 'scheduled_job'],
             ip: $this->ip,
         );

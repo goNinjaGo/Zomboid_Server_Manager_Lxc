@@ -67,7 +67,7 @@ class AutoRestartCheck extends Command
             AuditLogger::record(
                 actor: 'system',
                 action: 'server.autorestart.upcoming',
-                target: config('zomboid.docker.container_name'),
+                target: config('zomboid.runtime_name'),
                 details: [
                     'restart_time' => $timeKey,
                     'timezone' => $tz,
@@ -105,7 +105,7 @@ class AutoRestartCheck extends Command
             AuditLogger::record(
                 actor: 'system',
                 action: 'server.autorestart.scheduled',
-                target: config('zomboid.docker.container_name'),
+                target: config('zomboid.runtime_name'),
                 details: [
                     'restart_time' => $timeKey,
                     'timezone' => $tz,

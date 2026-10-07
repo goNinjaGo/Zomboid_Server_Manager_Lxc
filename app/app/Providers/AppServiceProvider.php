@@ -38,11 +38,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AuditLogger::class);
 
         $this->app->singleton(DockerManager::class, function ($app) {
-            $config = $app['config']['zomboid.docker'];
+            $config = $app['config']['zomboid'];
 
             return new DockerManager(
-                proxyUrl: $config['proxy_url'],
-                containerName: $config['container_name'],
+                proxyUrl: $config['docker']['proxy_url'],
+                containerName: $config['docker']['container_name'],
+                runtime: $config['runtime'],
+                systemdService: $config['systemd']['service'],
+                lxcManager: $config['lxc']['manager'],
             );
         });
 

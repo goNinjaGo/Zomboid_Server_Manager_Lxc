@@ -6,7 +6,7 @@
 
 **Full-stack web panel for managing a Project Zomboid dedicated server.**
 
-Docker-free Linux deployment is available using native systemd services, PostgreSQL, and SteamCMD. See [Native Linux Installation](docs/installation-native.md). Docker Compose remains supported.
+Docker-free Linux deployment is available using host systemd or an LXC container for the game server, with PostgreSQL and the web app installed on the host. See [Native Linux Installation](docs/installation-native.md) and [LXC Installation](docs/installation-lxc.md). Docker Compose remains supported.
 
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
@@ -24,10 +24,10 @@ Docker-free Linux deployment is available using native systemd services, Postgre
 
 ## Overview
 
-Zomboid Manager wraps a Dockerized Project Zomboid dedicated server with a Laravel REST API and a React + Inertia.js web dashboard. It provides remote management through three integration points:
+Zomboid Manager provides a Laravel REST API and a React + Inertia.js web dashboard for managing a Project Zomboid dedicated server. Deploy with Docker Compose, host systemd, or an LXC guest for the game server. The panel integrates through:
 
 - **RCON** — Source RCON TCP protocol for real-time player commands, broadcasts, and saves
-- **Docker Engine API** — Container lifecycle control (start, stop, restart, update) via the Docker socket
+- **Runtime control** — Docker Engine API, host systemd, or LXC lifecycle control (start, stop, restart, update)
 - **File I/O** — Direct read/write access to PZ config files (`server.ini`, sandbox Lua) mounted from the game server volume
 
 21 admin pages, a public status page, player portal, item shop, 40+ API endpoints, Discord notifications, an interactive player map, inventory management, safe zones, site customization, i18n, and more — all from a browser.
@@ -485,6 +485,7 @@ Navigate to the URL shown at the end of setup and log in with the displayed cred
 | Guide | Description |
 |-------|-------------|
 | [Linux Installation](docs/installation-linux.md) | Requirements, setup, and step-by-step instructions for Linux |
+| [LXC Installation](docs/installation-lxc.md) | Run the game server in an LXC guest with the panel on the host |
 | [Windows Installation](docs/installation-windows.md) | Windows desktop and Windows Server guidance for PowerShell wrappers and Linux backends **(alpha)** |
 | [Command Reference](docs/commands.md) | All `make` / `.\make.ps1` commands with Linux and Windows equivalents |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues, cloud provider notes, hardware requirements |

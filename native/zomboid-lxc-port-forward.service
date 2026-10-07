@@ -1,0 +1,13 @@
+[Unit]
+Description=Forward Project Zomboid UDP ports to the LXC game container
+After=lxc-net.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/zomboid-manager/server.env
+ExecStart=/usr/local/sbin/zomboid-lxc-port-forward
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

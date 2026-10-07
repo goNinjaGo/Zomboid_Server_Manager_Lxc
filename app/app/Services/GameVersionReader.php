@@ -17,7 +17,7 @@ class GameVersionReader
     ) {}
 
     /**
-     * Detect the current game version from Lua bridge, console log, or Docker logs.
+     * Detect the current game version from the Lua bridge, console log, or runtime logs.
      */
     public function detectVersion(): ?string
     {
@@ -33,12 +33,12 @@ class GameVersionReader
             return $consoleVersion;
         }
 
-        // Last resort: parse Docker container logs for version string
+        // Last resort: parse runtime logs for version string
         return $this->detectVersionFromLogs();
     }
 
     /**
-     * Get cached game version without hitting filesystem/Docker.
+     * Get cached game version without hitting the filesystem or runtime.
      */
     public function getCachedVersion(): ?string
     {
@@ -134,14 +134,14 @@ class GameVersionReader
     }
 
     /**
-     * Parse Docker container logs for PZ version pattern.
+     * Parse runtime logs for the PZ version pattern.
      */
     private function detectVersionFromLogs(): ?string
     {
         try {
             $lines = $this->docker->getContainerLogs(200);
         } catch (\Throwable $e) {
-            Log::debug('GameVersionReader: failed to read Docker logs', [
+            Log::debug('GameVersionReader: failed to read runtime logs', [
                 'error' => $e->getMessage(),
             ]);
 

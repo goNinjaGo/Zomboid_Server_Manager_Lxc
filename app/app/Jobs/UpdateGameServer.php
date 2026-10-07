@@ -61,7 +61,7 @@ class UpdateGameServer implements ShouldQueue
             $rcon->command('quit');
             sleep(2);
         } catch (\Throwable $e) {
-            Log::warning('RCON unavailable during update, proceeding with Docker stop', [
+            Log::warning('RCON unavailable during update, proceeding with runtime stop', [
                 'error' => $e->getMessage(),
             ]);
         }
@@ -72,7 +72,7 @@ class UpdateGameServer implements ShouldQueue
         AuditLogger::record(
             actor: 'system',
             action: 'server.update.executed',
-            target: config('zomboid.docker.container_name'),
+            target: config('zomboid.runtime_name'),
             details: [
                 'source' => 'scheduled_job',
                 'branch' => $this->branch ?? $updater->getCurrentBranch(),
@@ -80,7 +80,7 @@ class UpdateGameServer implements ShouldQueue
             ip: $this->ip,
         );
 
-        // 6. Start container (entrypoint picks up override + force flag)
+        // 6. Start the game runtime (startup script picks up the branch + update flag)
         $docker->startContainer();
 
         // 7. Wait for server to be ready (30 min timeout for SteamCMD downloads)

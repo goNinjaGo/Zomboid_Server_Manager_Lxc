@@ -42,14 +42,14 @@ class WipeGameServer implements ShouldQueue
             ]);
         }
 
-        // 2. Graceful shutdown via RCON, fallback to Docker stop
+        // 2. Graceful shutdown via RCON, fallback to stopping the game runtime
         try {
             $rcon->connect();
             $rcon->command('save');
             sleep(5);
             $rcon->command('quit');
         } catch (\Throwable $e) {
-            Log::warning('RCON unavailable during scheduled wipe, proceeding with Docker stop', [
+            Log::warning('RCON unavailable during scheduled wipe, proceeding with runtime stop', [
                 'error' => $e->getMessage(),
             ]);
         }
@@ -59,7 +59,7 @@ class WipeGameServer implements ShouldQueue
         AuditLogger::record(
             actor: 'system',
             action: 'server.wipe.executed',
-            target: config('zomboid.docker.container_name'),
+            target: config('zomboid.runtime_name'),
             details: ['source' => 'scheduled_job'],
             ip: $this->ip,
         );

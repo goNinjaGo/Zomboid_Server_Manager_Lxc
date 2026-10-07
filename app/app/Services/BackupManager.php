@@ -197,7 +197,7 @@ class BackupManager
     }
 
     /**
-     * Stop the game server gracefully via RCON then Docker.
+     * Stop the game server gracefully via RCON, then stop the configured runtime.
      */
     private function stopServer(): void
     {

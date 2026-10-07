@@ -30,7 +30,7 @@ class RestartGameServer implements ShouldQueue
             sleep(5);
             $rcon->command('quit');
         } catch (\Throwable $e) {
-            Log::warning('RCON unavailable during scheduled restart, proceeding with Docker restart', [
+            Log::warning('RCON unavailable during scheduled restart, proceeding with runtime restart', [
                 'error' => $e->getMessage(),
             ]);
         }
@@ -38,7 +38,7 @@ class RestartGameServer implements ShouldQueue
         AuditLogger::record(
             actor: 'system',
             action: 'server.restart.executed',
-            target: config('zomboid.docker.container_name'),
+            target: config('zomboid.runtime_name'),
             details: ['source' => 'scheduled_job'],
             ip: $this->ip,
         );
